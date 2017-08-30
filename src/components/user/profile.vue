@@ -1,6 +1,6 @@
 <template>
     <div class="profile_content">
-
+<h1>This is Profile</h1>
     </div>
 </template>
 
