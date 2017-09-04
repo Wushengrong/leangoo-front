@@ -1,17 +1,24 @@
 <template>
-    <div class="profile_content">
-<h1>This is Profile</h1>
+    <div class="profile_content" style="overflow: auto">
+      <user-info></user-info>
+
     </div>
 </template>
 
 <script>
-export default {
-
-}
+  import UserInfo from './userInfo.vue'
+  export default {
+      components : {
+            UserInfo
+        }
+  }
 </script>
 
 <style>
-.profile_content{
-    background-color: #EDEFF0
-}
+  .profile_content{
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+  }
 </style>
