@@ -14,7 +14,7 @@
   }
 </script>
 
-<style>
+<style scoped>
   .profile_content{
     background-color: white;
     width: 100%;

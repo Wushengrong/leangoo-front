@@ -1,6 +1,7 @@
 <template>
 <div class="menu-board">
-<div style="border-bottom: 1px rgb(140,140,140) inset;background-color:#F5F5F5 ">看板导航</div>
+<div style="border-bottom: 1px rgb(140,140,140) inset;background-color:#F5F5F5 ">
+  看板导航</div>
 <b-form-input  placeholder="输入看板名称进行过滤..." size="sm"></b-form-input>
   <b-btn  v-b-toggle.c1 variant="default"><icon name="user" scale="1"></icon><span>个人看板</span></b-btn>
   <b-collapse id="c1">

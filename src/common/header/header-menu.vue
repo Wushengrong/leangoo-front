@@ -2,10 +2,10 @@
   <b-navbar toggleable="md" style="background-color:rgba(0,0,0,0.15);" type="dark" :sticky="isSticky">
     <b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
-    <b-navbar-brand href="#"><img src="../../assets/team_logo.png" height="34px" width="130px"></b-navbar-brand>
+    <b-navbar-brand to="/"><img src="../../assets/team_logo.png" height="34px" width="130px"></b-navbar-brand>
 
     <b-nav-form>
-      <input type="text" id="header-search">
+      <input type="text" id="header-search" v-model="term">
       <icon name="search" scale="1.2" style="color: white;position: relative;left: -25px;cursor: pointer"></icon>
     </b-nav-form>
     <ul class="header-center">
@@ -24,9 +24,9 @@
         <template slot="button-content">
           <icon name="plus" scale="1" size="sm"></icon>
         </template>
-        <div  class="newButton">
+        <div class="newButton">
           <div style="border-bottom: 1px rgb(140,140,140) inset;background-color:#F5F5F5 ">
-          <h5 class="text-center" >新建</h5>
+            <h5 class="text-center">新建</h5>
           </div>
           <span>新建看板</span>
           <p>一个看板包括多个列表,每个列表包括多个任务卡片,团队通过看板共享任务,在线实时协作</p>
@@ -38,9 +38,12 @@
         <b-button variant="default" size="sm">
           <icon name="bars" scale="1"></icon>
         </b-button>
-        <b-dropdown right variant="default" text="看板导航" size="sm" >
+        <b-nav-item-dropdown right variant="default" size="sm">
+             <template slot="button-content">
+          看板导航</icon>
+        </template>
           <menu-board></menu-board>
-        </b-dropdown>
+        </b-nav-item-dropdown>
       </b-button-group>
       <b-button-group>
         <img src="../../assets/agzou.jpg" width="32px" height="32px">
@@ -64,20 +67,27 @@
 
 
 <script>
-  import MenuBoard from '../../common/header/menu-board.vue'
+import MenuBoard from '../../common/header/menu-board.vue'
+import Bus from '../../bus.js'
 export default {
-  components:{
-      MenuBoard
+  components: {
+    MenuBoard
+  },
+  watch:{
+    term(newValue){
+      Bus.$emit('search',newValue);
+    }
   },
   data() {
     return {
       isSticky: true,
-      no_caret:true,
-      UserAccount:''
+      no_caret: true,
+      UserAccount: '',
+      term:''
     }
   },
-  created(){
-    this.$ajax.get('/getUserInfo').then(res=>{this.UserAccount=res.data.UserAccount})
+  created() {
+    this.$ajax.post('/getUserInfo').then(res => { this.UserAccount = res.data.UserAccount })
   }
 }
 
@@ -119,6 +129,7 @@ export default {
   color: rgb(255, 255, 255);
   cursor: pointer;
 }
+
 .ml-auto .nav-link:link {
   font-size: 14px;
   line-height: 14px;
@@ -127,6 +138,7 @@ export default {
   color: rgb(255, 255, 255);
   border-radius: 4px;
 }
+
 .ml-auto .nav-link {
   font-size: 14px;
   line-height: 14px;
@@ -135,18 +147,20 @@ export default {
   color: rgb(255, 255, 255);
   border-radius: 4px;
 }
-  .newButton{
-    width: 300px;
-  }
-  .newButton p{
-    font-size: 12px;
-    color: rgb(140,140,140);
-    cursor: pointer;
-  }
-  .newButton span{
-    font-size: 14px;
-    color: black;
-    cursor: pointer;
-  }
 
+.newButton {
+  width: 300px;
+}
+
+.newButton p {
+  font-size: 12px;
+  color: rgb(140, 140, 140);
+  cursor: pointer;
+}
+
+.newButton span {
+  font-size: 14px;
+  color: black;
+  cursor: pointer;
+}
 </style>

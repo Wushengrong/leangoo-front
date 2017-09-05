@@ -8,7 +8,7 @@
           <b-button-group class="button-group1 mx-3" size="sm">
             <b-button variant="info" @click="OrderByFlag = 'BoardStartDate'">时间</b-button>
             <b-button variant="info" @click="OrderByFlag = 'BoardName'">名称</b-button>
-            <b-button variant="info">自定义</b-button>
+            <b-button variant="info" @click="OrderByFlag = ''">自定义</b-button>
           </b-button-group>
           <b-button variant="info" size="sm" style="background-color: rgba(255, 255, 255, 0.3)" @click="showCollapse" v-b-toggle.collapse1>
             <icon :name="icon"></icon>
@@ -22,7 +22,7 @@
                   <span style="font-size: 16px;line-height: 90px">新建面板</span>
                 </div>
               </b-card>
-              <draggable v-model="PersonalBoard" class="card-deck" :move="checkMove" @update="datadragEnd" :options="{ghostClass: 'ghost',animation: 0}">
+              <draggable v-model="PersonalBoard" class="card-deck" :move="checkMove" :options="dragOptions" @update="datadragEnd">
                 <b-card v-for="(Board,index) in SortPersonalBoard" :key="index" text-variant="white" class="text-center mb-4" no-body style="background-color:#DFECF4;height: 90px;max-width: 270px;cursor: pointer;min-width: 270px" border-variant="none">
                   <div class="card-text" style="color:rgb(85,85,85)">
                     <span style="font-size: 16px;line-height: 90px">{{Board.BoardName}}</span>
@@ -34,7 +34,7 @@
         </b-collapse>
       </div>
     </div>
-    <div class="project-section mt-2" v-for="(Project,index) in ProjectList" :key="index">
+    <div class="project-section mt-2" v-for="(Project,index) in  searchResult" :key="index">
       <div class="board_category">
         <b-button-toolbar>
           <icon name="cubes"></icon>
@@ -56,7 +56,7 @@
                   <span style="font-size: 16px;line-height: 90px">新建面板</span>
                 </div>
               </b-card>
-              <draggable v-model="Project.BoardList" class="card-deck" :move="checkMove" @update="datadragEnd" :options="{ghostClass: 'ghost',animation: 0}">
+              <draggable v-model="Project.BoardList" class="card-deck" :move="checkMove">
                 <b-card v-for="(Board,index) in Project.BoardList" :key="index" text-variant="white" class="text-center mb-4" no-body style="background-color:#DFECF4;height: 90px;max-width: 270px;cursor: pointer;min-width: 270px" border-variant="none">
                   <div class="card-text" style="color:rgb(85,85,85)">
                     <span style="font-size: 16px;line-height: 90px">{{Board.BoardName}}</span>
@@ -70,8 +70,12 @@
     </div>
     <div class="archive-category">
       <ul>
-        <li><a href="#">查看已归档看板</a></li>
-        <li><a href="#">查看已归档项目</a></li>
+        <li>
+          <a href="#">查看已归档看板</a>
+        </li>
+        <li>
+          <a href="#">查看已归档项目</a>
+        </li>
       </ul>
     </div>
   </div>
@@ -79,23 +83,61 @@
 
 <script>
 import draggable from 'vuedraggable'
+import Bus from '../bus.js'
 export default {
   components: { draggable },
   data() {
     return {
       icon: 'chevron-down',
-      OrderByFlag: '',
+      OrderByFlag: 'BoardLocate',
+      disabled: true,
       ProjectList: [],
+      searchResult:[],
+      searhcOptions:{keys:['BoardName']},
       PersonalBoard: [],
+      term:''
     }
   },
   watch: {
-
+    OrderByFlag(newValue) {
+      if (newValue === '') {
+        this.disabled = false;
+      } else this.disabled = true
+    },
+    term(){
+         if(this.term!='')
+      this.$search(this.term,this.ProjectList,{keys:["BoardList.BoardName"]}).then(result=>{
+        this.searchResult=result
+      });else this.searchResult=this.ProjectList;
+    }
   },
   computed: {
-    SortPersonalBoard: function() {
-      return this.lodash.orderBy(this.PersonalBoard, this.OrderByFlag)
+    SortPersonalBoard() {
+      var filterKey=this.term;
+      var data=this.PersonalBoard;
+      if(filterKey!=''){
+      data=  this.PersonalBoard.filter(function(Board){
+          return Object.keys(Board).some(function(key){
+              return String(Board[key]).toLowerCase().indexOf(filterKey)>-1
+          })
+        })
+      }
+      return this.lodash.orderBy(data,this.OrderByFlag)
     },
+    SortProjectBoard(){
+      if(this.term!='')
+      this.$search(this.term,this.ProjectList,{keys:["BoardList.BoardName"]}).then(result=>{
+        this.searchResult=result
+      });
+      return this.ProjectList
+    },
+    dragOptions() {
+      return {
+        ghostClass: 'ghost',
+        animation: 0,
+        disabled: this.disabled
+      }
+    }
   },
   methods: {
     showCollapse() {
@@ -111,17 +153,24 @@ export default {
     datadragEnd(evt) {
       console.log('拖动前索引:' + evt.oldIndex)
       console.log('拖动后索引:' + evt.newIndex)
-
-      console.log(this.PersonalBoard[0].BoardName)
-    }
+      console.log(this.PersonalBoard[0].BoardName+this.PersonalBoard[0].BoardLocate)
+      for(let i=0;i<this.PersonalBoard.length;i++){
+        this.PersonalBoard[i].BoardLocate=i
+      }
+      console.log(this.PersonalBoard[0].BoardName+this.PersonalBoard[0].BoardLocate)
+    },
   },
   created() {
     this.$ajax.post('/getUserProjectList').then((res) => {
       this.ProjectList = res.data.data;
       this.PersonalBoard = res.data.PersonalBoard
+      this.searchResult=res.data.data
     }).catch(res => {
       console.log(res)
-    })
+    }),
+   Bus.$on('search',value=>{
+     this.term=value;
+   }) 
   }
 }
 </script>
@@ -163,11 +212,13 @@ export default {
   float: left;
   margin-top: 30px;
 }
-.archive-category ul{
+
+.archive-category ul {
   list-style: none;
 }
-.archive-category ul li a{
-  color:white;
+
+.archive-category ul li a {
+  color: white;
   text-decoration: underline;
 }
 </style>
